@@ -1,0 +1,71 @@
+@html.extend('layout', function(model) {
+  @html.block('content', function(model) {
+    <div class="row">
+      <!--<div class="col-md-12">
+
+      </div>-->
+      <div class="col-xs-12">
+        <div class="box">
+          <div class="box-header">
+            <h3 class="box-title">User Table</h3>
+          </div>
+          <div class="box-body">
+            <table class="table table-bordered table-hover example2">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>User Name</th>
+                  <th>Email</th>
+                  <th>UID</th>
+                  <th>User Type</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @model.users.forEach(function(m){
+                  <tr class="block_@m.userId">
+                    <td>@m.sno @if(m.login_status){ <i class="fa fa-circle text-success"></i> }</td>
+                    <td>@m.username</td>
+                    <td>@m.email</td>
+                    <td>@m.userId</td>
+                    <td>@m.usertype</td>
+                    <td>
+                      <span class="btn btn-danger" onclick="delete_user('@m.userId', '@m.usertype')">Delete</span>
+                      <span class="btn btn-primary" onclick="user_action('@m.userId')">User Details</span>
+                      <span class="btn btn-primary" onclick="view_current_activity('@m.userId')">Current Activity</span>
+                    </td>
+                  </tr>
+                })
+              </tbody>
+            </table>
+          </div>
+          <!--end of box-->
+        </div>
+        <!--end of col-12-->
+      </div>
+      <!--end of row-->
+    </div>
+  })
+
+  @html.block('script', function(model) {
+    <script type="text/javascript">
+      function delete_user(userId, user_type) {
+        console.log( userId );
+        $.ajax({
+          method: "GET",
+          url   : "/ajax",
+          data  : { action: "delete_user", user_id: userId, user_type: user_type }
+        }).then(function(resu) {
+          console.log( resu );
+          window.location.reload();
+        });
+      }
+      function user_action(userId) {
+        window.location.href = '/user-details?user_id='+userId;
+      }
+      function view_current_activity(userId) {
+        window.location.href = '/current-activity?user_id='+userId;
+      }
+    </script>
+  })
+})  

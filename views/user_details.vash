@@ -1,0 +1,95 @@
+@html.extend('layout', function(model) {
+  @html.block('content', function(model) {
+    <div class="row">
+        <div class="col-md-12">
+            <!-- header secion-->
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">@model.title</h3>
+                </div>
+                <div class="box-body">
+                    <form action="/ajax" method="post" id="user_form">
+                        <input type="hidden" name="action" value="user_details_edit">
+                        <input type="hidden" name="user_id" value="@model.details.userId">
+                        <input type="hidden" name="email" value="@model.details.email">
+                        <input type="hidden" name="usertype" value="@model.details.usertype">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="username">User Name :</label>
+                                    <input type="text" class="form-control" id="username" name="username" value="@model.details.username" placeholder="Enter Username">
+                                </div>
+                                <div class="form-group">
+                                    <label for="address1">Address1 :</label>
+                                    <input type="text" class="form-control" id="address1" name="address1" value="@model.details.address1" placeholder="Enter Address1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="address2">Address2 :</label>
+                                    <input type="text" class="form-control" id="address2" name="address2" value="@model.details.address2" placeholder="Enter Address2">
+                                </div>
+                                <div class="form-group">
+                                    <label for="city">City :</label>
+                                    <input type="text" class="form-control" id="city" name="city" value="@model.details.city" placeholder="Enter City">
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email :</label>
+                                    <input type="text" disabled="true" class="form-control" id="email_id" name="email" value="@model.details.email" placeholder="Enter Email">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="firstname">Firstname :</label>
+                                    <input type="text" class="form-control" id="firstname" name="firstname" value="@model.details.firstname" placeholder="Enter Firstname">
+                                </div>
+                                <div class="form-group">
+                                    <label for="lastname">Lastname :</label>
+                                    <input type="text" class="form-control" id="lastname" name="lastname" value="@model.details.lastname" placeholder="Enter Lastname">
+                                </div>
+                                <div class="form-group">
+                                    <label for="phonenumber">Phonenumber :</label>
+                                    <input type="text" class="form-control" id="phonenumber" name="phonenumber" value="@model.details.phonenumber" placeholder="Enter Phonenumber">
+                                </div>
+                                <div class="form-group">
+                                    <label for="usertype">Usertype :</label>
+                                    <!--<select class="form-control">
+                                        <option selected="@(model.details.usertype == 'student')" value="student">Student</option>
+                                        <option selected="@(model.details.usertype == 'teacher')" value="teacher">Teacher</option>
+                                    </select>-->
+                                    <input type="text" disabled="true" class="form-control" id="usertype" name="usertype_user" value="@model.details.usertype" placeholder="Enter Usertype">
+                                </div>
+                                <div class="form-group">
+                                    <label for="zipcode">Zipcode :</label>
+                                    <input type="text" class="form-control" id="zipcode" name="zipcode" value="@model.details.zipcode" placeholder="Enter Zipcode">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+    						<button class="btn bg-purple btn-flat margin Add-More margin_left_0" onclick="submit_form()" type="button">Save</button>
+                            <button class="btn btn-primary btn-flat bg-green @(model.details.usertype == 'teacher' ? '' : 'display_none')" type="button" onclick="go_to_user_courses('@model.details.userId')">Teacher Courses</button>
+                            <button class="btn btn-primary btn-flat bg-green @(model.details.usertype == 'teacher' ? 'display_none' : '')" type="button" onclick="go_to_student_courses('@model.details.userId')">Student Courses</button>
+    					</div>
+                    </form>
+                </div>
+            </div>
+            <!--end of header-->
+        </div>
+    </div>
+  })
+  @html.block('script', function(model) {
+      <script type="text/javascript">
+        function go_to_user_courses(userId) {
+            console.log( userId );
+            window.location.href = '/user-courses?user_id='+userId+'&user_name='+encodeURI('@model.title');
+        }
+        function go_to_student_courses(userId) {
+            window.location.href = '/student-courses?user_id='+userId+'&user_name='+encodeURI('@model.title');
+        }        
+        function submit_form() {
+            var check = confirm('Are you sure you want to save this data?');
+            if(check) {
+                $('#user_form').submit();
+            }
+        }
+      </script>
+  })
+})

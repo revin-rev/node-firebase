@@ -1,0 +1,18 @@
+.margin_left_0 { margin-left: 0; }
+.marginTop{	margin-top: 5px; }
+
+
+.display_none { display: none; }
+
+
+
+.row.board-box{
+	margin-right: 0px;
+	margin-left: 0px;
+}
+.btn.btn-danger.pull-right {
+	margin-right: 3%;
+}
+iframe.wysihtml5-sandbox{
+	width: 100% !important;
+}

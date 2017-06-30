@@ -1,0 +1,359 @@
+@html.extend('layout', function(model) {
+  @html.block('content', function(model) {
+    <div class="row">
+        <div class="col-md-6">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">@model.user_name</h3>
+                </div>
+                <div class="box-body">
+                    @if(model.status == 1){
+                        <div class="alert alert-danger col-md-12">
+                            Student already applied.
+                        </div>
+                    } else if( model.status == 2 ) {
+                        <div class="alert alert-danger col-md-12">
+                            Student not found.
+                        </div>
+                    }
+                    <table class="table table-bordered table-hover example2">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Course Name</th>
+                                <th>Date Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @model.user_courses.forEach(function(m){
+                            <tr class="block_@m.userId">
+                                <td>@m.counter</td>
+                                <td>@m.course_name</td>
+                                <td>@m.date_added</td>
+                                <!--<td>@(m.course_completion == 1 ? '' : '' )</td>   @(model.active ? 'highlight' : '')--> 
+                                <td>
+                                    <span class="btn btn-danger" onclick="delete_course('@m.courseId')">Delete</span>
+                                    <span class="btn btn-primary" onclick="course_action('@m.courseId')">Course Details</span>
+                                    <span class="btn btn-primary" onclick="add_student_to_this_course('@m.courseId', '@m.course_start', '@m.course_end', '@m.course_name')">Add Student</span>
+                                </td>
+                            </tr>
+                            })
+                        </tbody>
+                    </table>
+                </div>
+            </div><!--end of box-->
+            <div class="box box-primary student_applied_to_course_display" style="display: none">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Student Applied to Course</h3>
+                </div>
+                <div class="box-body">
+                    <table class="table table-bordered table-hover example2">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Student Name</th>
+                                <th>Date Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student_applied_to_course">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Start : Add student to this course -->
+            <div class="box box-primary add_student_to_course" style="display: none">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Add student</h3>
+                </div>
+                <div class="box-body">
+                    <form action="/ajax" method="post">
+                        <input type="hidden" name="action" value="add_student_to_course">
+                        <input type="hidden" name="courseid" class="add_student_course_id" value="">
+                        <input type="hidden" name="course_start" class="course_start">
+                        <input type="hidden" name="course_end" class="course_end">
+                        <input type="hidden" name="course_name" class="course_name">
+                        <input type="hidden" name="course_owner_name" class="course_owner_name" value="@model.user_name">
+                        <input type="hidden" name="course_owner_id" class="course_owner_id" value="@model.userId">
+                        <div class="form-group">
+                            <input type="text" class="form-control educator_benefit" id="add_student" name="add_student" placeholder="Student email" value="">
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary" type="submit">Add Student</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div> <!-- col-md-6 -->
+        <div class="col-md-6" id="course_block" style="display: none;">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Course Details</h3>
+                </div>
+                <div class="box-body" id="course_details">
+                    
+                </div>
+            </div>
+        </div> <!-- col-md-6 -->
+    </div>
+  })
+
+  @html.block('script', function(model) {
+      <script type="text/javascript">
+        function course_students(course_id, this_thing) {
+            $(this_thing).attr('disabled','disabled');
+            student_applied_to_course(course_id).then(function (students_html) {
+                console.log( 'students_html', students_html );
+                $('.student_applied_to_course_display').show();
+                if( students_html != '' ) {
+                    $('#student_applied_to_course').html( students_html );
+                }
+            });
+        }
+
+        function add_student_to_this_course(courseid, course_start, course_end, course_name) {
+            console.log( courseid );
+            $('.add_student_course_id').val( courseid );
+            $('.course_start').val( course_start );
+            $('.course_end').val( course_end );
+            $('.course_name').val( course_name );
+            $('.add_student_to_course').show();
+        }
+
+        function delete_course( courseId ) {
+            $.ajax({
+                method : 'post',
+                url    : '/ajax',
+                data   : { action : 'teacher_course_delete', course_id : courseId, userId : '@model.userId' }
+            }).then(function(res) {
+                console.log( res );
+                window.location.reload();
+            })
+        }
+
+        function delete_student_who_applied_to_course(course_id, user_id) {
+            $.ajax({
+                method : 'post',
+                url    : '/ajax',
+                data   : {
+                    action    : 'delete_course_from_studentId_and_courseId',
+                    course_id : course_id,
+                    user_id   : user_id
+                }
+            }).then(function (res) {
+                // $('.display_'+course_id).remove();
+            })
+        }
+
+        var str = `
+        <form action="/ajax" method="post" onsubmit="return edit_course()">
+            <input type="hidden" name="action" value="edit_course">
+            <input type="hidden" name="course_id" value="{course_id}">
+            <input type="hidden" name="user_id" value="{user_id}">
+            <input type="hidden" name="counter" value="" id="counter">
+            <div class="form-group">
+                <label for="address_1">address_1 : </label>
+                <input type="text" class="form-control" id="address_1" value="{address_1}" name="address_1" placeholder="Enter address_1">
+            </div>
+            <div class="form-group">
+                <label for="address_2">address_2 : </label>
+                <input type="text" class="form-control" id="address_2" value="{address_2}" name="address_2" placeholder="Enter address_2">
+            </div>
+            <div class="form-group">
+                <label for="capacity">capacity : </label>
+                <input type="text" class="form-control" id="capacity" value="{capacity}" name="capacity" placeholder="Enter capacity">
+            </div>
+            <div class="form-group">
+                <label for="courseDescription">courseDescription : </label>
+                <input type="text" class="form-control" id="courseDescription" value="{courseDescription}" name="courseDescription" placeholder="Enter courseDescription">
+            </div>
+            <div class="form-group">
+                <label for="course_complete_status">course_complete_status : </label>
+                <input type="text" class="form-control" id="course_complete_status" value="{course_complete_status}" name="course_complete_status" placeholder="Enter course_complete_status">
+            </div>
+            <div class="form-group">
+                <label for="course_description">course_description : </label>
+                <input type="text" class="form-control" id="course_description" value="{course_description}" name="course_description" placeholder="Enter course_description">
+            </div>
+            <div class="form-group">
+                <label for="course_title">course_title : </label>
+                <input type="text" class="form-control" id="course_title" value="{course_title}" name="course_title" placeholder="Enter course_title">
+            </div>
+            <div class="form-group">
+                <label for="courselevel">courselevel : </label>
+                <input type="text" class="form-control" id="courselevel" value="{courselevel}" name="courselevel" placeholder="Enter courselevel">
+            </div>
+            <div class="form-group">
+                <label for="date_added">date_added : </label>
+                <input type="text" class="form-control" id="date_added" value="{date_added}" name="date_added" placeholder="Enter date_added">
+            </div>
+            <div class="form-group">
+                <label for="fees">fees : </label>
+                <input type="text" class="form-control" id="fees" value="{fees}" name="fees" placeholder="Enter fees">
+            </div>
+            <div class="form-group">
+                <label for="frequency">frequency : </label>
+                <input type="text" class="form-control" id="frequency" value="{frequency}" name="frequency" placeholder="Enter frequency">
+            </div>
+            <div class="form-group">
+                <label for="generalComments">generalComments : </label>
+                <input type="text" class="form-control" id="generalComments" value="{generalComments}" name="generalComments" placeholder="Enter generalComments">
+            </div>
+            <div class="form-group">
+                <label for="instructor_name">instructor_name : </label>
+                <input type="text" class="form-control" id="instructor_name" value="{instructor_name}" name="instructor_name" placeholder="Enter instructor_name">
+            </div>
+            <div class="form-group">
+                <label for="instructor_orginization">instructor_orginization : </label>
+                <input type="text" class="form-control" id="instructor_orginization" value="{instructor_orginization}" name="instructor_orginization" placeholder="Enter instructor_orginization">
+            </div>
+            <div class="form-group">
+                <label for="instructor_profile">instructor_profile : </label>
+                <input type="text" class="form-control" id="instructor_profile" value="{instructor_profile}" name="instructor_profile" placeholder="Enter instructor_profile">
+            </div>
+            <div class="form-group">
+                <label for="last_day_to_apply">last_day_to_apply : </label>
+                <input type="text" class="form-control" id="last_day_to_apply" value="{last_day_to_apply}" name="last_day_to_apply" placeholder="Enter last_day_to_apply">
+            </div>
+            <div class="form-group">
+                <label for="location">location : </label>
+                <input type="text" class="form-control" id="location" value="{location}" name="location" placeholder="Enter location">
+            </div>
+            <div class="form-group">
+                <label for="pre_requisit">pre_requisit : </label>
+                <input type="text" class="form-control" id="pre_requisit" value="{pre_requisit}" name="pre_requisit" placeholder="Enter pre_requisit">
+            </div>
+            <div class="form-group">
+                <label for="quantity">quantity : </label>
+                <input type="text" class="form-control" id="quantity" value="{quantity}" name="quantity" placeholder="Enter quantity">
+            </div>
+            <div class="form-group">
+                <label for="start_day">Start Day : Format - dd-mm-yyyy</label>
+                <input type="text" class="form-control" id="start_day" value="{start_day}" name="start_day" placeholder="Enter Start Day">
+            </div>
+            <div class="form-group">
+                <label for="end_day">End Day : Format - dd-mm-yyyy</label>
+                <input type="text" class="form-control" id="end_day" value="{end_day}" name="end_day" placeholder="Enter End Day">
+            </div>
+
+            {timings}
+            <div id="additional_timings" class=""></div>
+            <div class="form-group text-right">
+                <button class="btn btn-info educator-plus-button" type="button" onclick="add_timings()" title="Add"><i class="fa fa-fw fa-plus-circle"></i></button>
+            </div>
+
+            <div class="form-group">
+                <button class="btn bg-purple btn-flat margin Add-More margin_left_0" type="submit">Submit</button>
+                <button class="btn bg-light-blue btn-flat margin Add-More margin_left_0" onclick="course_students('{course_id}', this)" type="button">Student Applied to this course</button>
+            </div>
+        </form>`;
+
+        var additional_timing_string = `
+        <div class="remove{number}">
+            <div class="form-group">
+                <label for="day{number}">Start Timings : Format - day(lowercase), eg : monday</label>
+                <input type="text" class="form-control" id="day{number}" value="{day}" name="day{number}" placeholder="Start Timings">
+            </div>
+            <div class="form-group">
+                <label for="start_timings{number}">Start Timings : Format - HH-MM(H=Hour, M=Minute)</label>
+                <input type="text" class="form-control" id="start_timings{number}" value="{start_timings}" name="start_timings{number}" placeholder="Start Timings">
+            </div>
+            <div class="form-group">
+                <label for="end_timings{number}">End Day : Format - HH-MM(H=Hour, M=Minute)</label>
+                <input type="text" class="form-control" id="end_timings{number}" value="{end_timings}" name="end_timings{number}" placeholder="Enter End Day">
+            </div>
+            <div class="form-group text-right">
+                <button class="btn remove-button" onclick="remove_timings({number})" type="button" title="Remove"><i class="fa fa-fw fa-times-circle"></i></button>
+            </div>
+        </div>
+        `;
+        var counter = 0;    // timing counter
+
+        function escapeRegExp(str) {
+            return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+        }
+
+        function update_counter(input) {
+            $('#counter').val(input);
+        }
+
+        function course_action( courseId ) {
+            $.ajax({
+                method: 'GET',
+                url: '/ajax',
+                data: { action: 'get_course_data', course_id: courseId }
+            }).then(function(res) {
+                // console.log( res );
+
+                output = str
+                .replace('{user_id}', res.user_id)
+                // .replace('{course_id}', courseId)
+                .replace('{address_1}', res.address_1)
+                .replace('{address_2}', res.address_2)
+                .replace('{capacity}', res.capacity)
+                .replace('{courseDescription}', res.courseDescription)
+                .replace('{course_complete_status}', res.course_complete_status)
+                .replace('{course_description}', res.course_description)
+                .replace('{course_title}', res.course_title)
+                .replace('{courselevel}', res.courselevel)
+                .replace('{date_added}', res.date_added)
+                .replace('{fees}', res.fees)
+                .replace('{frequency}', res.frequency)
+                .replace('{generalComments}', res.generalComments)
+                .replace('{instructor_name}', res.instructor_name)
+                .replace('{instructor_orginization}', res.instructor_orginization)
+                .replace('{instructor_profile}', res.instructor_profile)
+                .replace('{last_day_to_apply}', res.last_day_to_apply)
+                .replace('{location}', res.location)
+                .replace('{pre_requisit}', res.pre_requisit)
+                .replace('{quantity}', res.quantity)
+                .replace('{start_day}', res.start_end_day.start_day)
+                .replace('{end_day}', res.start_end_day.end_day);
+
+                output = replaceAll(output, '{course_id}', courseId);
+
+                var total_timing_output = '';
+                for( i in res.timings) {
+                    total_timing_output = replaceAll(additional_timing_string, '{number}', counter)
+                    .replace('{start_timings}', res.timings[i].start.hour+'-'+res.timings[i].start.minute)
+                    .replace('{end_timings}', res.timings[i].end.hour+'-'+res.timings[i].end.minute)
+                    .replace('{day}', res.timings[i].start.day);
+                    counter++;
+                }
+                output = output
+                .replace('{timings}', total_timing_output);
+
+                $('#course_block').show();
+                $('#course_details').html( output );
+                update_counter(counter);
+            });
+        }
+
+        function add_timings() {
+            // var this_output = replaceAll(additional_timing_string, '{number}', counter)
+            console.log( counter );
+            var this_output = replaceAll(additional_timing_string, '{number}', counter)
+            .replace('{start_timings}', '')
+            .replace('{end_timings}', '')
+            .replace('{day}', '');
+            counter++;
+            update_counter(counter)
+            $('#additional_timings').append(this_output);
+        }
+
+        function remove_timings(timing_number) {
+            $('.remove'+timing_number).html();
+            // counter--;
+        }
+
+        function edit_course() {
+            console.log('edit course');
+            return true;
+        }
+      </script>
+  })
+})

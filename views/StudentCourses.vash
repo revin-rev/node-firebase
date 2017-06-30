@@ -1,0 +1,94 @@
+@html.extend('layout', function(model) {
+  @html.block('content', function(model) {
+    <div class="row">
+        <div class="col-md-6">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">Course Applied or Requested</h3>
+                </div>
+                <div class="box-body">
+                    <table class="table table-bordered table-hover example2">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Course Name</th>
+                                <th>Date Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @model.user_courses.courses_applied_requested.forEach(function(m){
+                            <tr class="block_@m.courseId">
+                                <td>@m.counter</td>
+                                <td>@m.course_name</td>
+                                <td>@m.date_requested</td> 
+                                <td>
+                                    <span class="btn btn-danger" onclick="delete_course('@m.courseId', 'requested', '@m.course_key', '@m.user_id')">Delete</span>
+                                </td>
+                            </tr>
+                            })
+                        </tbody>
+                    </table>
+                </div>
+            </div><!--end of box-->
+
+        </div> <!-- col-md-6 -->
+
+
+        <div class="col-md-6">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">Course Completed</h3>
+                </div>
+                <div class="box-body">
+                    <table id="example3" class="table table-bordered table-hover example2">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Course Name</th>
+                                <th>Date Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @model.user_courses.courses_complete.forEach(function(m){
+                            <tr class="block_@m.courseId">
+                                <td>@m.counter</td>
+                                <td>@m.course_name</td>
+                                <td>@m.date_requested</td> 
+                                <td>
+                                    <span class="btn btn-danger" onclick="delete_course('@m.courseId', 'completed', '@m.course_key', '@m.user_id')">Delete</span>
+                                </td>
+                            </tr>
+                            })
+                        </tbody>
+                    </table>
+                </div>
+            </div><!--end of box-->
+        </div> <!-- col-md-6 -->
+    </div>
+
+  })
+
+  @html.block('script', function(model) {
+      <script type="text/javascript">
+        function delete_course( course_id, status, course_key, user_id ) {
+            console.log( course_id, status, course_key, user_id );
+            $.ajax({
+                method : 'post',
+                url    : '/ajax',
+                data   : {
+                    action    : 'student_delete_course',
+                    status    : status,
+                    course_id : course_id,
+                    course_key: course_key,
+                    user_id   : user_id
+                }
+            }).then(function(res) {
+                $('.block_'+course_id).remove();
+                console.log( 'res', res );
+            })
+        }
+      </script>
+  })
+})

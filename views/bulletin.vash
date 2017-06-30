@@ -1,0 +1,172 @@
+@html.extend('layout', function(model) {
+  @html.block('content', function(model) {
+	<div class="row">
+	  	<div class="col-xs-12">
+			<div class="box">
+		  		<div class="box-header">
+					<h3 class="box-title">User Table</h3>
+					<button class="btn btn-primary" onclick="add_more()">Add More</button>
+		 	 	</div>
+		  		<div class="box-body">
+					<table id="" class="table table-bordered table-hover example2">
+			  			<thead>
+							<tr>
+								<th>#</th>
+								<th>Title</th>
+								<th>Sub-Title</th>
+								<th>Description</th>
+								<th>Image</th>
+								<th>Actions</th>
+							</tr>
+			  			</thead>
+			  			<tbody>
+							@if(model.dyn){
+								@model.dyn.forEach(function(bul){
+									<tr>
+										<td>@bul.count</td>
+										<td>@bul.title</td>
+										<td>@bul.sub</td>
+										<td>@bul.des</td>
+										<td><img width="50px" src="@bul.image" alt="Image"></td>
+										<td>
+											<button onclick="edit('@bul.key')" class="btn btn-primary">Edit</button>
+											<button class="btn btn-danger" onclick="delete_bulletin('@bul.key')">Delete</button>
+										</td>
+									</tr>
+								})
+							}
+						</tbody>
+					</table>
+		  		</div>
+		  	</div> <!--end of box-->
+		</div> <!--end of col-12-->
+	</div> <!--end of row-->
+	  
+	<div class="row add_more_form" style="display: none;">
+	  	<div class="col-xs-12">
+			<div class="box">
+				<div class="box-header">
+					<h3 class="box-title">Add Bulletin</h3>
+				</div>
+				<div class="box-body">
+					<form action="/ajax" method="post" enctype="multipart/form-data">
+						<input type="hidden" name="action" value="bulletin_data">
+						<div class="row append-data">
+							<div class="col-md-6">
+								<div class="form-group">
+									<label for="title">Title :</label>
+									<input type="text" class="form-control title" id="title" name="title" placeholder="Enter Title" value="">
+								</div>
+								<div class="form-group image_add0">
+									<label for="image">Image :</label>
+									<span><b>Note :</b> image size should be 277 * 330 pixels.</span>
+									<input type="file" class="form-control image" id="image" name="image" value="">
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="form-group">
+									<label for="subtitle">Sub-Title :</label>
+									<input type="text" class="form-control subtitle" id="subtitle" name="subtitle" placeholder="Enter Sub-Title" value="">
+								</div> 
+								<div class="form-group">
+									<label for="description">Descriptions :</label>
+									<textarea class="form-control description" id="description" name="description" placeholder="Enter Description" col="75" rows="3"></textarea>
+								</div>
+							</div>
+						</div> <!-- end append-data -->
+						
+						<div class="form-group">
+							<button class="btn bg-purple btn-flat margin">Submit</button>
+							<button class="btn bg-danger btn-flat margin" onclick="$('.add_more_form').hide()">Cancel</button>
+						</div>
+					</form>
+				</div> <!-- end box-body -->
+			</div>
+		</div> <!-- end box-warning -->
+	</div> <!-- end board-box -->
+
+	<div class="row edit_form" style="display: none;">
+	  	<div class="col-xs-12">
+			<div class="box">
+				<div class="box-header">
+					<h3 class="box-title">Edit Bulletin</h3>
+				</div>
+				<div class="box-body">
+					<form action="/ajax" method="post" enctype="multipart/form-data">
+						<div class="content_edit"></div>
+						
+						<div class="form-group">
+							<button class="btn bg-purple btn-flat margin">Submit</button>
+							<button class="btn bg-danger btn-flat margin" onclick="$('.edit_form').hide()">Cancel</button>
+						</div>
+					</form>
+				</div> <!-- end box-body -->
+			</div>
+		</div> <!-- end box-warning -->
+	</div> <!-- end board-box -->
+  })
+
+  @html.block('script', function(model) {
+	<script type="text/javascript">
+	  	function add_more() {
+			  $('.add_more_form').show();
+		}
+		function edit(key) {
+			var str = `
+			<input type="hidden" name="action" value="bulletin_data">
+			<input type="hidden" name="key" value="{key}">
+			<div class="row append-data">
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="title">Title :</label>
+						<input type="text" class="form-control title" id="title" name="title" placeholder="Enter Title" value="{title}">
+					</div>
+					<div class="form-group image_add0">
+						<label for="image">Image :</label>
+						<span><b>Note :</b> image size should be 277 * 330 pixels.</span>
+						<input type="file" class="form-control image" id="image" name="image" value="">
+					</div>
+				</div>
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="subtitle">Sub-Title :</label>
+						<input type="text" class="form-control subtitle" id="subtitle" name="subtitle" placeholder="Enter Sub-Title" value="{subtitle}"> 
+					</div>
+					<div class="form-group">
+						<label for="description">Descriptions :</label>
+						<textarea class="form-control description" id="description" name="description" placeholder="Enter Description" col="75" rows="3">{description}</textarea>
+					</div>
+				</div>
+			</div>
+			`;
+			$.ajax({
+				method: 'post',
+                url: '/ajax',
+                data: { action: 'get_bulletin', bulletin_id: key }
+			}).then((data) => {
+				console.log( data );
+				output = str
+				.replace('{key}', key)
+				.replace('{title}', data.title)
+				.replace('{subtitle}', data.subtitle)
+				.replace('{description}', data.description);
+				$('.content_edit').html(output);
+				$('.edit_form').show();
+			});
+
+			// console.log( key );
+		}
+		function delete_bulletin( key ) {
+			console.log( 'key', key );
+			$.ajax({
+				method: 'post',
+                url: '/ajax',
+                data: { action: 'bulletin_delete', bulletin_id: key }
+			}).then((data) => {
+				console.log(data);
+				window.location.reload();
+			});
+		}
+	</script>
+  })
+})  
